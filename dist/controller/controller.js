@@ -13,15 +13,67 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const model_1 = __importDefault(require("../Model/model"));
+const exceljs_1 = __importDefault(require("exceljs"));
 const xlsx_1 = __importDefault(require("xlsx"));
 class employee {
+    newEmployee(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const newEmployee = req.body;
+                const employee = yield model_1.default.findOne({ where: { name: newEmployee.name } });
+                if (employee)
+                    res.send({ message: "Employee with same Detail Already exists" });
+                const employeeAdded = yield model_1.default.create(newEmployee);
+                const id = employeeAdded.id;
+                res.send({ message: "Employee Added successfully", id });
+            }
+            catch (err) {
+                console.error(err);
+                res.send({ message: "Server Error", err });
+            }
+        });
+    }
+    updateEmployee(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const newEmployee = req.body;
+                const id = req.params.id;
+                const employee = yield model_1.default.findByPk(id);
+                if (!employee)
+                    res.send({ message: "Employee not found" });
+                const employeeAdded = yield model_1.default.update(newEmployee, { where: { id: id } });
+                res.send({ message: "Employee Updated successfully" });
+            }
+            catch (err) {
+                console.error(err);
+                res.send({ message: "Server Error", err });
+            }
+        });
+    }
+    deleteEmployee(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const newEmployee = req.body;
+                const id = req.params.id;
+                const employee = yield model_1.default.findByPk(id);
+                if (!employee)
+                    res.send({ message: "Employee not Found" });
+                yield model_1.default.destroy({ where: { id: id } });
+                res.send({ message: "Employee Deleted successfully" });
+            }
+            catch (err) {
+                console.error(err);
+                res.send({ message: "Server Error", err });
+            }
+        });
+    }
     addEmployee(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const files = req.files;
                 const checkBox = req.body.checkBox;
                 if (!checkBox)
-                    return res.send({ message: "Proveide the Check Box" });
+                    return res.send({ message: "Fill the Check Box" });
                 if (!files || files.length === 0) {
                     return res.status(400).send('No files uploaded.');
                 }
@@ -66,7 +118,7 @@ class employee {
             }
         });
     }
-    getEmplyeeById(req, res) {
+    getEmployeeById(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const empId = req.params.id;
@@ -97,6 +149,41 @@ class employee {
             catch (err) {
                 console.error(err);
                 res.send({ message: "Server Error", err });
+            }
+        });
+    }
+    download(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const users = yield model_1.default.findAll();
+                const workbook = new exceljs_1.default.Workbook();
+                const worksheet = workbook.addWorksheet("User Data");
+                worksheet.columns = [
+                    { header: "id", key: "id", width: 15 },
+                    { header: "name", key: "name", width: 15 },
+                    { header: "age", key: "age", width: 15 },
+                    { header: "gender", key: "gender", width: 15 },
+                    { header: "uniqueId", key: "uniqueId", width: 15 },
+                    { header: "role", key: "role", width: 15 },
+                    { header: "ctc", key: "ctc", width: 15 },
+                    { header: "basicSalary", key: "basicSalary", width: 15 },
+                    { header: "actualHRA", key: "actualHRA", width: 15 },
+                    { header: "specialAllowance", key: "specialAllowance", width: 15 },
+                    { header: "incomeTax", key: "incomeTax", width: 15 },
+                    // Excel format
+                ];
+                users.forEach((user) => {
+                    worksheet.addRow(user);
+                });
+                const excelBuffer = yield workbook.xlsx.writeBuffer();
+                const excelFileName = "user_data.xlsx"; // The name of the downloaded Excel file
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.setHeader('Content-Disposition', `attachment; filename=${excelFileName}`);
+                res.send(excelBuffer);
+            }
+            catch (err) {
+                console.error(err);
+                return res.status(500).send({ message: "Server Error..." });
             }
         });
     }
