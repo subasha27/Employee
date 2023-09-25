@@ -8,8 +8,15 @@ class employee {
     async newEmployee(req: Request, res: Response) {
         try {
             const newEmployee = req.body
+            newEmployee.basicSalary = newEmployee.ctc * 0.35;
+            newEmployee.actualHRA = newEmployee.ctc * 0.12;
+            newEmployee.specialAllowance = newEmployee.ctc * 0.43;
+            newEmployee.incomeTax = newEmployee.ctc * 0.10;
+
+
             const employee = await DataModel.findOne({ where: { name: newEmployee.name } });
             if (employee) res.send({ message: "Employee with same Detail Already exists" })
+
             const employeeAdded = await DataModel.create(newEmployee);
             const id = employeeAdded.id
             res.send({ message: "Employee Added successfully", id })
@@ -23,8 +30,10 @@ class employee {
         try {
             const newEmployee = req.body
             const id = req.params.id
+
             const employee = await DataModel.findByPk(id);
             if (!employee) res.send({ message: "Employee not found" })
+
             const employeeAdded = await DataModel.update(newEmployee, { where: { id: id } });
             res.send({ message: "Employee Updated successfully" })
         } catch (err) {
@@ -37,8 +46,10 @@ class employee {
         try {
             const newEmployee = req.body
             const id = req.params.id
+
             const employee = await DataModel.findByPk(id);
             if (!employee) res.send({ message: "Employee not Found" })
+
             await DataModel.destroy({ where: { id: id } });
             res.send({ message: "Employee Deleted successfully" })
         } catch (err) {
@@ -52,6 +63,7 @@ class employee {
             const files = req.files as Express.Multer.File[];
             const checkBox = req.body.checkBox
             if (!checkBox) return res.send({ message: "Fill the Check Box" })
+
             if (!files || files.length === 0) {
                 return res.status(400).send('No files uploaded.');
             }
@@ -77,7 +89,9 @@ class employee {
                 for (const record of recordsToCreate) {
                     console.log(record)
                     const existingId = await DataModel.findOne({ where: { uniqueId: record.uniqueId } })
+
                     if (existingId && checkBox == 'false') { console.log({ message: `Duplicate Data Found and is Skipped`, existingId: existingId.toJSON() }) }
+
                     if (existingId && checkBox == 'true') {
                         await DataModel.update(record, { where: { id: existingId.id } })
                         console.log({ message: "Updated" })
@@ -100,8 +114,10 @@ class employee {
     async getEmployeeById(req: Request, res: Response) {
         try {
             const empId = req.params.id
+
             const employee = await DataModel.findByPk(empId);
             if (!employee) res.send({ message: "Employee Not Found" })
+
             res.send({ message: "Details", employee })
         } catch (err) {
             console.error(err)
