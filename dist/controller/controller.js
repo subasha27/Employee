@@ -20,6 +20,10 @@ class employee {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const newEmployee = req.body;
+                newEmployee.basicSalary = newEmployee.ctc * 0.35;
+                newEmployee.actualHRA = newEmployee.ctc * 0.12;
+                newEmployee.specialAllowance = newEmployee.ctc * 0.43;
+                newEmployee.incomeTax = newEmployee.ctc * 0.10;
                 const employee = yield model_1.default.findOne({ where: { name: newEmployee.name } });
                 if (employee)
                     res.send({ message: "Employee with same Detail Already exists" });
